@@ -16,14 +16,15 @@ func main() {
 	// with a 5 minute timeout.
 	scanner, err := RustScan.NewScanner(
 		RustScan.WithTargets("baidu.com"),
-		RustScan.WithPorts("80,443,843,22"),
+		RustScan.WithPorts("1-65535"),
 		RustScan.WithContext(ctx),
 	)
 	if err != nil {
 		log.Fatalf("unable to create RustScan scanner: %v", err)
 	}
 
-	result, _, err := scanner.Run()
+	// 传入一个 limit ，如果 rustscan 先扫出的端口大于 传入的值，则判断存在 cdn，就不在调用 nmap 识别
+	result, _, err := scanner.Run(30)
 	if err != nil {
 		log.Fatalf("unable to run RustScan scan: %v", err)
 	}
