@@ -17,12 +17,11 @@ RustScan 快速筛选开放的端口，然后调用 nmap 进行服务识别
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "time"
-
-    "github.com/yhy0/RustScan"
+	"context"
+	"fmt"
+	"github.com/yhy0/RustScan"
+	"log"
+	"time"
 )
 
 func main() {
@@ -32,9 +31,14 @@ func main() {
     // Equivalent to `/usr/local/bin/RustScan -p 80,443,843 google.com facebook.com youtube.com`,
     // with a 5 minute timeout.
     scanner, err := RustScan.NewScanner(
-        RustScan.WithTargets("google.com", "facebook.com", "youtube.com"),
-        RustScan.WithPorts("80,443,843"),
-        RustScan.WithContext(ctx),
+		RustScan.WithTargets("baidu.com"),
+		RustScan.WithPorts("1-65535"),
+		RustScan.WithContext(ctx),
+		RustScan.WithBatchSize(4500),
+		RustScan.WithTimeout(1500),
+		RustScan.WithScanOrder("random"),
+		RustScan.WithUlimit(5000),
+	)
     )
     if err != nil {
         log.Fatalf("unable to create RustScan scanner: %v", err)

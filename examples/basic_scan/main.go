@@ -18,6 +18,10 @@ func main() {
 		RustScan.WithTargets("baidu.com"),
 		RustScan.WithPorts("1-65535"),
 		RustScan.WithContext(ctx),
+		RustScan.WithBatchSize(4500),
+		RustScan.WithTimeout(1500),
+		RustScan.WithScanOrder("random"),
+		RustScan.WithUlimit(5000),
 	)
 	if err != nil {
 		log.Fatalf("unable to create RustScan scanner: %v", err)
