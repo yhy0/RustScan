@@ -13,6 +13,8 @@ var (
 	// ErrScanTimeout means that the provided context was done before the scanner finished its scan.
 	ErrScanTimeout = errors.New("RustScan scan timed out")
 
+	ErrScanCDN = errors.New("Suspected CDN, no scanning")
+
 	// ErrMallocFailed means that RustScan crashed due to insufficient memory, which may happen on large target networks.
 	ErrMallocFailed = errors.New("malloc failed, probably out of space")
 

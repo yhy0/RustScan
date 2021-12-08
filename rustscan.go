@@ -69,9 +69,9 @@ func NewScanner(options ...Option) (*Scanner, error) {
 }
 
 // Run runs RustScan synchronously and returns the result of the scan.
-func (s *Scanner) Run() (result *Run, warnings []string, err error) {
+func (s *Scanner) Run(limit int) (result *Run, warnings []string, err error) {
 	var (
-		stdout, stderr bytes.Buffer
+		stderr bytes.Buffer
 		resume         bool
 	)
 
@@ -94,13 +94,38 @@ func (s *Scanner) Run() (result *Run, warnings []string, err error) {
 
 	// Prepare RustScan process
 	cmd := exec.Command(s.binaryPath, args...)
-	cmd.Stdout = &stdout
+
+	cmdStdoutPipe, _ := cmd.StdoutPipe()
+
+	//cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	// Run RustScan process
 	err = cmd.Start()
 	if err != nil {
 		return nil, warnings, err
+	}
+	var out_tmp string
+
+	var n int
+	// 从管道中实时获取输出并打印到终端
+	for {
+		tmp := make([]byte, 1024)
+		_, err := cmdStdoutPipe.Read(tmp)
+		out_tmp += string(tmp)
+		if strings.Contains(string(tmp), "Open") {
+			n++
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	if n > limit {
+		// Context was done before the scan was finished.
+		// The process is killed and a timeout error is returned.
+		_ = cmd.Process.Kill()
+		return nil, warnings, ErrScanCDN
 	}
 
 	// Make a goroutine to notify the select when the scan is done.
@@ -116,7 +141,6 @@ func (s *Scanner) Run() (result *Run, warnings []string, err error) {
 		// Context was done before the scan was finished.
 		// The process is killed and a timeout error is returned.
 		_ = cmd.Process.Kill()
-
 		return nil, warnings, ErrScanTimeout
 	case <-done:
 
@@ -135,7 +159,7 @@ func (s *Scanner) Run() (result *Run, warnings []string, err error) {
 		// Potentially available warnings are returned too, but probably not the reason for a broken XML.
 
 		var out []byte
-		rustscan_info := strings.Split(stdout.String(), "[~]")
+		rustscan_info := strings.Split(out_tmp, "[~]")
 		for _, info := range rustscan_info {
 			if strings.Contains(info, "<?xml ") {
 				out = []byte(info[1:])
@@ -147,7 +171,6 @@ func (s *Scanner) Run() (result *Run, warnings []string, err error) {
 
 		result, err := Parse(out)
 		if err != nil {
-			fmt.Println(err.Error())
 			warnings = append(warnings, err.Error()) // Append parsing error to warnings for those who are interested.
 			return nil, warnings, ErrParseOutput
 		}
@@ -909,8 +932,6 @@ func WithPorts(ports ...string) Option {
 	} else {
 		elems = "-r"
 	}
-
-	fmt.Println(portList)
 
 	return func(s *Scanner) {
 		// Find if any port is set.

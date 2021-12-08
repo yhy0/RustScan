@@ -9,6 +9,7 @@ https://github.com/nmap/nmap
 
 RustScan 快速筛选开放的端口，然后调用 nmap 进行服务识别 
 和 masscan + nmap 联合调用效果一样，不过该项目的有点在于RustScan会自动调用 nmap 进行识别
+并且如果 rustscan 先扫出的端口个数大于一定的值(用户传入),则判断存在 cdn ，不再调用 nmap 扫描
 
 ## Simple example
 
@@ -38,8 +39,8 @@ func main() {
     if err != nil {
         log.Fatalf("unable to create RustScan scanner: %v", err)
     }
-
-    result, warnings, err := scanner.Run()
+	// 传入一个 limit ，如果 rustscan 先扫出的端口大于 传入的值，则判断存在 cdn，就不在调用 nmap 识别
+    result, warnings, err := scanner.Run(30)
     if err != nil {
         log.Fatalf("unable to run RustScan scan: %v", err)
     }
