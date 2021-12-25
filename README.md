@@ -38,7 +38,6 @@ func main() {
 		RustScan.WithTimeout(1500),
 		RustScan.WithScanOrder("random"),
 		RustScan.WithUlimit(5000),
-	)
     )
     if err != nil {
         log.Fatalf("unable to create RustScan scanner: %v", err)
